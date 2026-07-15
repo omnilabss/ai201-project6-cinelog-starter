@@ -71,6 +71,23 @@ def test_add_to_watchlist_creates_entry(app, sample_user, sample_film):
         assert in_db is not None
 
 
+def test_add_to_watchlist_public_defaults_true_and_can_be_overridden(app, sample_user, sample_film):
+    """
+    add_to_watchlist() should default public=True but allow callers to
+    opt an entry into private visibility explicitly.
+    """
+    with app.app_context():
+        entry = add_to_watchlist(user_id=sample_user, film_id=sample_film)
+        assert entry.public is True
+
+        film_b = Film(title="Private Watch", year=2021, genre="Drama")
+        db.session.add(film_b)
+        db.session.commit()
+
+        private_entry = add_to_watchlist(user_id=sample_user, film_id=film_b.id, public=False)
+        assert private_entry.public is False
+
+
 # ── Deduplication ────────────────────────────────────────────────────────────
 
 def test_add_to_watchlist_duplicate_raises(app, sample_user, sample_film):
