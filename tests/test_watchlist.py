@@ -11,10 +11,12 @@ from models import User, Film, WatchlistEntry
 from datetime import datetime, timezone, timedelta
 from services.watchlist_service import (
     add_to_watchlist,
+    remove_from_watchlist,
     get_watchlist,
     AlreadyOnWatchlistError,
+    NotOnWatchlistError,
 )
-from services.collection_service import FilmNotFoundError
+from services.collection_service import FilmNotFoundError, add_to_collection
 
 
 @pytest.fixture
@@ -120,6 +122,57 @@ def test_add_to_watchlist_nonexistent_film_raises(app, sample_user):
 
         with pytest.raises(FilmNotFoundError):
             add_to_watchlist(user_id=sample_user, film_id=fake_film_id)
+
+
+# ── Remove ────────────────────────────────────────────────────────────────────
+
+def test_remove_from_watchlist_deletes_entry(app, sample_user, sample_film):
+    """
+    Removing a film that's on the watchlist should delete its entry.
+    """
+    with app.app_context():
+        add_to_watchlist(user_id=sample_user, film_id=sample_film)
+
+        result = remove_from_watchlist(user_id=sample_user, film_id=sample_film)
+        assert result is True
+
+        in_db = WatchlistEntry.query.filter_by(
+            user_id=sample_user, film_id=sample_film
+        ).first()
+        assert in_db is None
+
+
+def test_remove_from_watchlist_not_present_raises(app, sample_user, sample_film):
+    """
+    Removing a film that isn't on the watchlist should raise
+    NotOnWatchlistError rather than silently doing nothing.
+    """
+    with app.app_context():
+        with pytest.raises(NotOnWatchlistError):
+            remove_from_watchlist(user_id=sample_user, film_id=sample_film)
+
+
+# ── Cross-feature independence (edge case) ───────────────────────────────────
+
+def test_add_to_watchlist_independent_of_collection(app, sample_user, sample_film):
+    """
+    A film already logged in a user's collection (already watched) should
+    still be addable to that same user's watchlist, and vice versa — the
+    two features have separate dedup checks (AlreadyInCollectionError vs.
+    AlreadyOnWatchlistError) backed by separate tables, so one shouldn't
+    block the other. This is the kind of coupling bug a naive shared
+    "already logged this film" check could accidentally introduce.
+    """
+    with app.app_context():
+        add_to_collection(user_id=sample_user, film_id=sample_film)
+
+        entry = add_to_watchlist(user_id=sample_user, film_id=sample_film)
+        assert entry is not None
+
+        on_watchlist = WatchlistEntry.query.filter_by(
+            user_id=sample_user, film_id=sample_film
+        ).first()
+        assert on_watchlist is not None
 
 
 # ── Sort order ────────────────────────────────────────────────────────────────
