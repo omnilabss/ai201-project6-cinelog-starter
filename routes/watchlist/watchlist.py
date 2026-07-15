@@ -59,7 +59,7 @@ def remove_film(user_id):
     """
     DELETE /watchlist/<user_id>/remove
 
-    Body: { "film_id": <int> }
+    Body: { "film_id": "<uuid>" }
     """
     data = request.get_json()
     if not data or "film_id" not in data:
