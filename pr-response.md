@@ -134,20 +134,4 @@ pytest tests/ -v
 
 `git log --oneline` on `feature/watchlist` (relative to `main`), after rebasing and rewriting history — no merge commits:
 
-```
-55eb727 chore: ignore local .claude/ settings
-446681f docs: add pr-response.md with review responses and design decisions
-48e6668 fix: update remaining integer film_id references after UUID rebase
-eed7870 test: add tests for remove_from_watchlist and cross-feature dedup
-0614488 feat: add remove_from_watchlist and DELETE /watchlist/<user_id>/remove
-2f7ba76 feat: allow callers to set watchlist entry visibility explicitly
-0fe4aae feat: add optional date-added sort order to watchlist
-8ce8027 fix: add missing Film-WatchlistEntry relationship
-78797c1 test: add watchlist test suite
-2ceacc9 fix: add deduplication check to add_to_watchlist
-07b55e7 fix: rename save_to_watchlist to add_to_watchlist
-9dad2c4 fix: use db.session.get instead of Query.get for film lookup
-43e57fe feat: add watchlist model and endpoints
-```
-
-*(An actual screenshot image of this output should be pasted here before final submission — see note to reviewer below.)*
+![git log --oneline showing 13 conventional commits with no merge commits](git-log-screenshot.png)
